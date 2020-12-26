@@ -27,6 +27,8 @@ client.connect();
 //instantiate variables to be used
 var time = new Date().getTime();
 var min = 1000 * 60, timetr = 0;
+var printOnly = new Map();
+
 
 //send the timed messages every 15 minutes
 setInterval(timedMessage, 15 * min);
@@ -37,17 +39,26 @@ function onMessageHandler (target, context, msg, self) {
 
   // Remove whitespace from chat message
   const commandName = msg.trim();
+  setUp(printOnly, context);
 
-  // If the command is known, let's execute it
-  if (commandName === '!dice') {
+  //command is print only
+  if (printOnly.has(commandName)){
+    //uses the user's username in message
+    if (printOnly.get(commandName).cont != null){
+      client.say(target, printOnly.get(commandName).cont+printOnly.get(commandName).message);
+    }//end of if
+    //basic print
+    else{
+      client.say(target, printOnly.get(commandName).message);
+    }//end of else
+  }//end of if
+
+  //commands below require further action on this side (extra functions, etc.)
+  else if (commandName === '!dice') {
     const num = rollDice();
     client.say(target, `You rolled a ${num}`);
     console.log(`* Executed ${commandName} command`);
-  }//end of if
-  else if (commandName === '!lurk') {
-    client.say(opts.channels[0], context.username + ` is now lurking. Thanks for being here, I hope you stay cozy! peepoBlanket`);
-    console.log(`* Executed ${commandName} command`);
-  }//end of if
+  }//end of else if
   //unknown command 
   else{
     console.log(`* Unknown command ${commandName}`);
@@ -80,3 +91,10 @@ function rollDice () {
 function onConnectedHandler (addr, port) {
   console.log(`* Connected to ${addr}:${port}`);
 }
+
+//sets up the map of print only functions
+//this map has the command name as the key, and has an array of the context and the message to be printed
+function setUp(map, context){
+  map.set('!lurk', {cont: context.username, message: ' is now lurking. Thanks for being here, I hope you stay cozy! peepoBlanket'});
+  map.set('!pbj', {cont: null, message: 'This channel uses PBJ Points! You earn PBJ Points for watching, following, and other actions. You can use these for certain things such as gambling (!gamble {value}) and playing the slot machine (!slots {value}). At the end of the month, whoever has the most loyalty points will get a gift sub once I earn affiliate!'});
+}// end of setUp
