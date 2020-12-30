@@ -14,10 +14,16 @@ Right now, it has two main purposes:
 
 ### Executing Commands 
 
-Right now, it only knows one command! Don't worry, my next steps are going to include expanding its library.
+Right now, it only knows a few commands, but I am currently working on expanding its library.
 
-* lurk
+* !lurk
   * The bot will let the streamer know that the user who executed this command is lurking, meaning they are not actively watching every moment or participating in chat.
+* !pbj
+  * This gives an explanation of my channel's loyalty point system (hosted by another bot as of now), and points users in the right direction of interacting with that system.
+* !qotd
+  * The bot outputs the question of the day for that stream
+* !setqotd {int}
+  * The question of the day is read from a file set up for that week, taking the integer argument to read a certain line with the question for that specific day.
   
 ### Sending Timed Messages
 
