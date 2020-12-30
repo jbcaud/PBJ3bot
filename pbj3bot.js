@@ -1,6 +1,7 @@
 const tmi = require('tmi.js');
 const dotenv = require('dotenv');
 dotenv.config();
+const fs = require('fs');
 
 // Define configuration options
 //obtained from env file
@@ -26,8 +27,9 @@ client.connect();
 
 //instantiate variables to be used
 var time = new Date().getTime();
-var min = 1000 * 60, timetr = 0;
+var min = 1000 * 60, timesExecuted = 0;
 var printOnly = new Map();
+this.qotd;
 
 
 //send the timed messages every 15 minutes
@@ -36,9 +38,10 @@ setInterval(timedMessage, 15 * min);
 // Called every time a message comes in
 function onMessageHandler (target, context, msg, self) {
   if (self) { return; } // Ignore messages from the bot
-
+  
   // Remove whitespace from chat message
-  const commandName = msg.trim();
+  var split = msg.split(" ");
+  const commandName = split[0];
   setUp(printOnly, context);
 
   //command is print only
@@ -54,10 +57,14 @@ function onMessageHandler (target, context, msg, self) {
   }//end of if
 
   //commands below require further action on this side (extra functions, etc.)
-  else if (commandName === '!dice') {
+  else if (commandName == '!dice') {
     const num = rollDice();
     client.say(target, `You rolled a ${num}`);
     console.log(`* Executed ${commandName} command`);
+  }//end of else if
+  else if (commandName == '!setqotd'){
+    var day = split[1];//sets day to be used in readQOTD
+    readQOTD(day);
   }//end of else if
   //unknown command 
   else{
@@ -68,16 +75,16 @@ function onMessageHandler (target, context, msg, self) {
 //Called at selected intervals of time
 function timedMessage(){
   //first message (follow)
-  if (timetr == 0){
+  if (timesExecuted % 2 == 0){
     //output message and change track var
     client.say(opts.channels[0], 'If you are enjoying the stream, follow us so you can know when we go live!');
-    timetr = 1;
+    timesExecuted++;
   }//end of if
   //second message (points)
   else{
     //output message and change track var
     client.say(opts.channels[0], 'This channel uses PBJ Points! You earn PBJ Points for watching, following, and other actions. Use !pbj to learn more!');
-    timetr = 0;
+    timesExecuted++;
   }//end of else
 }//end of timedMessage
 
@@ -97,4 +104,13 @@ function onConnectedHandler (addr, port) {
 function setUp(map, context){
   map.set('!lurk', {cont: context.username, message: ' is now lurking. Thanks for being here, I hope you stay cozy! peepoBlanket'});
   map.set('!pbj', {cont: null, message: 'This channel uses PBJ Points! You earn PBJ Points for watching, following, and other actions. You can use these for certain things such as gambling (!gamble {value}) and playing the slot machine (!slots {value}). At the end of the month, whoever has the most loyalty points will get a gift sub once I earn affiliate!'});
+  map.set('!qotd', {cont: null, message: 'Question of the day: ' + this.qotd});
 }// end of setUp
+
+//function that reads the QOTD file and sets qotd to the correct line
+function readQOTD(day){
+  fs.readFile('qotd.txt', 'utf-8', (err, data) => {
+    var split = data.split('\n');//split by line
+    qotd = split[day - 1];//read correct line
+  })
+}//end of readQOTD
