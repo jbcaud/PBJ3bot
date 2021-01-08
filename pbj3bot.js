@@ -19,10 +19,7 @@ const opts = {
 
 // Create a client with our options
 const client = new tmi.client(opts);
-getAuth();
-setTimeout(()=>{
-  useAPI();
-},1000);
+
 // Register our event handlers (defined below)
 client.on('message', onMessageHandler);
 client.on('connected', onConnectedHandler);
@@ -34,9 +31,13 @@ client.connect();
 var min = 1000 * 60, timesExecuted = 0, numMessages = 0;
 var printOnly = new Map();
 this.qotd, this.so;
-global.auth;
+global.auth, global.api;
 //send the timed messages every 15 minutes
 setInterval(timedMessage, 15 * min);
+getAuth();
+setTimeout(()=>{
+  useAPI();
+}, 700);
 
 // Called every time a message comes in
 function onMessageHandler (target, context, msg, self) {
@@ -75,6 +76,32 @@ function onMessageHandler (target, context, msg, self) {
     var day = split[1];//sets day to be used in readQOTD
     readQOTD(day);
   }//end of else if
+  else if (commandName == '!uptime'){//shows user how long the current stream has been
+
+    timeStart = global.api.data[0].started_at;//get streamer's starting time from API
+    var diff = Math.abs(new Date() - timeStart);//find difference between current time and start time
+
+    //calculate hours, minutes, and seconds they have been live
+    global.hoursLive = Math.floor(diff / 3600000);
+    global.minsLive = Math.floor(diff / 60000) - global.hoursLive * 60;
+    global.secsLive = Math.floor(diff / 1000) - minsLive * 60;
+    
+    //delay this so no error occurs
+    setTimeout(()=>{
+      if (global.hoursLive > 0){//greater than an hour of streaming
+        //print out how many hours, minutes, and seconds they've been streaming
+        client.say(opts.channels[0], process.env.channel + ' has been live for ' + global.hoursLive + ' hours, ' + global.minsLive + ' minutes, and ' + global.secsLive + ' seconds.');
+      }//end of if
+      else if (global.minsLive > 0){//less than an hour of streaming
+        //print out how many minutes and seconds they've been streaming
+        client.say(opts.channels[0], process.env.channel + ' has been live for ' + global.minsLive + ' minutes and ' + global.secsLive + ' seconds.');
+      }//end of else if
+      else{//less than a minute of streaming (who would use it then?)
+        //print out how many seconds they've been streaming
+        client.say(opts.channels[0], process.env.channel + ' has been live for ' + global.secsLive + ' seconds.');
+      }//end of else
+    }, 1);
+  }//end of else if
   //unknown command 
   else{
     console.log(`* Unknown command ${commandName}`);
@@ -86,17 +113,20 @@ function timedMessage(){
   //only execute if 5 comments have been made since last message
   if (numMessages < 5) {return;}
   //first message (follow)
-  if (timesExecuted % 2 == 0){
+  if (timesExecuted % 3 == 0){
     //output message and change track var
     client.say(opts.channels[0], 'If you are enjoying the stream, follow us so you can know when we go live!');
     timesExecuted++;
   }//end of if
   //second message (points)
-  else{
+  else if (timesExecuted % 3 == 1){
     //output message and change track var
     client.say(opts.channels[0], 'This channel uses PBJ Points! You earn PBJ Points for watching, following, and other actions. Use !pbj to learn more!');
     timesExecuted++;
   }//end of else
+  else{
+    client.say(opts.channels[0], 'Enjoying talking to chat? Join our Discord server to talk with them and Jake outside of stream! https://discord.gg/' + process.env.discord);
+  }
   numMessages = 0;
 }//end of timedMessage
 
@@ -119,6 +149,7 @@ function setUp(map, context, split){
   map.set('!twitter', {cont: null, message: 'Follow me on Twitter: https://twitter.com/' + process.env.channel});
   map.set('!qotd', {cont: null, message: 'Question of the day: ' + this.qotd});
   map.set('!so', {cont: null, message: 'Check out ' + split[1] + ', they are a great content creator! Visit their channel here: https://twitch.tv/' + split[1]});
+  map.set('!discord', {cont: null, message: 'Join our Discord server to chat with the community outside of stream! https://discord.gg/' + process.env.discord});
 }// end of setUp
 
 //function that reads the QOTD file and sets qotd to the correct line
@@ -155,7 +186,7 @@ function useAPI(){
   request.send();
   request.onreadystatechange = function () {
     if (request.readyState === 4) {
-      console.log(request.responseText);
+      global.api = JSON.parse(request.responseText);
     }
   };
 }
