@@ -78,13 +78,14 @@ function onMessageHandler (target, context, msg, self) {
   }//end of else if
   else if (commandName == '!uptime'){//shows user how long the current stream has been
 
-    timeStart = global.api.data[0].started_at;//get streamer's starting time from API
-    var diff = Math.abs(new Date() - timeStart);//find difference between current time and start time
-
+    global.timeStart = new Date(global.api.data[0].started_at);//get streamer's starting time from API
+    var diff = Math.abs(new Date() - global.timeStart);//find difference between current time and start time
+    
     //calculate hours, minutes, and seconds they have been live
     global.hoursLive = Math.floor(diff / 3600000);
     global.minsLive = Math.floor(diff / 60000) - global.hoursLive * 60;
     global.secsLive = Math.floor(diff / 1000) - minsLive * 60;
+    console.log(timeStart);
     
     //delay this so no error occurs
     setTimeout(()=>{
