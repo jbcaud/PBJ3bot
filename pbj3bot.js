@@ -34,6 +34,8 @@ this.qotd, this.so;
 global.auth, global.api;
 //send the timed messages every 15 minutes
 setInterval(timedMessage, 15 * min);
+
+//sets up api for later use
 getAuth();
 setTimeout(()=>{
   useAPI();
@@ -162,33 +164,39 @@ function readQOTD(day){
 }//end of readQOTD
 
 function getAuth(){
-  
+
+  //set up request with paramaters
   var request = new XMLHttpRequest();
-  var params = '?client_id=kpgiuho4cwavzv5ndxu9ytimayryk9&client_secret=8ypn641rf38s475s0kxh294f0h8bsq&grant_type=client_credentials';
-  
+  var params = '?client_id=' + process.env.clientid + '&client_secret=' + process.env.secret + '&grant_type=client_credentials';
+
+  //open post request and send it
   request.open('POST', 'https://id.twitch.tv/oauth2/token'+params, true);
-  request.setRequestHeader('client-id', 'kpgiuho4cwavzv5ndxu9ytimayryk9');
-  
-  request.onreadystatechange = function () {
-    if (request.readyState === 4) {
-      global.auth = JSON.parse(request.responseText);
-    }
-  };
   request.send();
 
-  //global.auth = 0;
-}
+  request.onreadystatechange = function () {
+    if (request.readyState === 4) { //valid
+      //parse request for api authorization
+      global.auth = JSON.parse(request.responseText);
+    }//end of if
+  };
+
+}//end of getAuth
 
 function useAPI(){
-  var request = new XMLHttpRequest();
+  var request = new XMLHttpRequest(); //instantiate request
+
+  //open request and set headers
   request.open('GET', 'https://api.twitch.tv/helix/search/channels?query=' + process.env.channel, true);
   request.setRequestHeader('client-id', process.env.clientid);
   request.setRequestHeader('Authorization', 'Bearer ' + global.auth.access_token);
-  request.send();
+  request.send();//send request
+
   request.onreadystatechange = function () {
-    if (request.readyState === 4) {
+    if (request.readyState === 4) { //if it's valid
+      //parse result to use
       global.api = JSON.parse(request.responseText);
-    }
+    }//end of if
   };
-}
+
+}//end of useAPI
 
